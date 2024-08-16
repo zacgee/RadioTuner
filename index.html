@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Tuner</title>
     <style>
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+        }
+
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
             background-color: #000; /* Background color changed to black */
-            margin: 0;
         }
 
         .knob-container {
@@ -112,8 +116,16 @@
         const rect = knob.getBoundingClientRect();
         const knobCenterX = rect.left + rect.width / 2;
         const knobCenterY = rect.top + rect.height / 2;
-        const deltaX = event.clientX - knobCenterX;
-        const deltaY = event.clientY - knobCenterY;
+        let deltaX, deltaY;
+
+        if (event.type.includes('touch')) {
+            deltaX = event.touches[0].clientX - knobCenterX;
+            deltaY = event.touches[0].clientY - knobCenterY;
+        } else {
+            deltaX = event.clientX - knobCenterX;
+            deltaY = event.clientY - knobCenterY;
+        }
+
         let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
         // Convert angle to 0-360 range
@@ -138,20 +150,20 @@
         radioSound.currentTime = 0;
     }
 
-    knob.addEventListener('mousedown', (event) => {
+    function startDrag(event) {
         isDragging = true;
         event.preventDefault(); // Prevent text selection
         stopAllSounds(); // Stop any currently playing sound
-    });
+    }
 
-    document.addEventListener('mousemove', (event) => {
+    function endDrag() {
+        isDragging = false;
+    }
+
+    function rotateKnob(event) {
         if (!isDragging) return;
 
         let angle = getRotation(event);
-        if (angle < 0) {
-            angle += 360;
-        }
-
         knob.style.transform = `rotate(${angle}deg)`;
 
         let frequency = Math.floor(angle / 2); // Scale angle to frequency (0 to 180 MHz)
@@ -164,11 +176,17 @@
         } else {
             playSoundWithDelay(whiteNoise); // Play white noise after delay
         }
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+    // Mouse Events
+    knob.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', rotateKnob);
+    document.addEventListener('mouseup', endDrag);
+
+    // Touch Events
+    knob.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchmove', rotateKnob);
+    document.addEventListener('touchend', endDrag);
 </script>
 
 </body>
