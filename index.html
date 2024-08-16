@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Tuner</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000; /* Background color changed to black */
+            margin: 0;
+        }
+
+        .knob-container {
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+
+        .knob {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #ddd 30%, #bbb 70%, #999 100%);
+            border-radius: 50%;
+            border: 4px solid #666;
+            position: absolute;
+            top: 0;
+            left: 0;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3),
+                        2px 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+        }
+
+        .knob:before {
+            content: '';
+            width: 8px;
+            height: 60px;
+            background-color: #333;
+            position: absolute;
+            top: 10px;
+            border-radius: 3px;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .numbers-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .number {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff; /* Text color changed to white */
+        }
+
+        #frequency-display {
+            position: absolute;
+            top: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #fff; /* Text color changed to white */
+        }
+    </style>
+</head>
+<body>
+
+<div class="knob-container">
+    <div class="knob" id="knob"></div>
+    <div class="numbers-container">
+        <div class="number" style="transform: translate(+180%, 10%) rotate(0deg) translate(85px) rotate(0deg);">45</div>
+        <div class="number" style="transform: translate(+140%, 140%) rotate(45deg) translate(85px) rotate(-45deg);">70</div>
+        <div class="number" style="transform: translate(+10%, 150%) rotate(90deg) translate(85px) rotate(-90deg);">90</div>
+        <div class="number" style="transform: translate(-140%, +140%) rotate(135deg) translate(85px) rotate(-135deg);">110</div>
+        <div class="number" style="transform: translate(-120%, 10%) rotate(180deg) translate(85px) rotate(-180deg);">135</div>
+        <div class="number" style="transform: translate(-110%, -100%) rotate(225deg) translate(85px) rotate(-225deg);">160</div>
+        <div class="number" style="transform: translate(+40%, -110%) rotate(270deg) translate(85px) rotate(-270deg);">0</div>
+        <div class="number" style="transform: translate(+110%, -130%) rotate(315deg) translate(85px) rotate(-315deg);">20</div>
+    </div>
+    <div id="frequency-display">Frequency: 0 MHz</div>
+</div>
+
+<audio id="radio-sound" src="clue.wav"></audio>
+<audio id="white-noise" src="white-noise.mp3"></audio>
+
+<script>
+    const knob = document.getElementById('knob');
+    const frequencyDisplay = document.getElementById('frequency-display');
+    const radioSound = document.getElementById('radio-sound');
+    const whiteNoise = document.getElementById('white-noise');
+    let isDragging = false;
+    let soundTimeout;
+
+    function getRotation(event) {
+        const rect = knob.getBoundingClientRect();
+        const knobCenterX = rect.left + rect.width / 2;
+        const knobCenterY = rect.top + rect.height / 2;
+        const deltaX = event.clientX - knobCenterX;
+        const deltaY = event.clientY - knobCenterY;
+        let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+        // Convert angle to 0-360 range
+        if (angle < 0) {
+            angle += 360;
+        }
+
+        return angle;
+    }
+
+    function playSoundWithDelay(audioElement) {
+        soundTimeout = setTimeout(() => {
+            audioElement.play();
+        }, 2000);
+    }
+
+    function stopAllSounds() {
+        clearTimeout(soundTimeout);
+        whiteNoise.pause();
+        whiteNoise.currentTime = 0;
+        radioSound.pause();
+        radioSound.currentTime = 0;
+    }
+
+    knob.addEventListener('mousedown', (event) => {
+        isDragging = true;
+        event.preventDefault(); // Prevent text selection
+        stopAllSounds(); // Stop any currently playing sound
+    });
+
+    document.addEventListener('mousemove', (event) => {
+        if (!isDragging) return;
+
+        let angle = getRotation(event);
+        if (angle < 0) {
+            angle += 360;
+        }
+
+        knob.style.transform = `rotate(${angle}deg)`;
+
+        let frequency = Math.floor(angle / 2); // Scale angle to frequency (0 to 180 MHz)
+        frequencyDisplay.textContent = `Frequency: ${frequency} MHz`;
+
+        stopAllSounds();
+
+        if (frequency === 75) {
+            playSoundWithDelay(radioSound); // Play main sound after delay
+        } else {
+            playSoundWithDelay(whiteNoise); // Play white noise after delay
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+</script>
+
+</body>
+</html>
