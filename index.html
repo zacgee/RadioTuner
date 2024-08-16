@@ -9,14 +9,14 @@
             overflow: hidden;
             height: 100%;
             margin: 0;
-            touch-action: none; /* Disable default touch actions */
+            touch-action: none;
         }
 
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #000; /* Background color changed to black */
+            background-color: #000;
         }
 
         .knob-container {
@@ -70,7 +70,7 @@
             position: absolute;
             font-size: 20px;
             font-weight: bold;
-            color: #fff; /* Text color changed to white */
+            color: #fff;
         }
 
         #frequency-display {
@@ -81,7 +81,7 @@
             font-size: 20px;
             font-weight: bold;
             margin-top: 20px;
-            color: #fff; /* Text color changed to white */
+            color: #fff;
         }
     </style>
 </head>
@@ -193,6 +193,21 @@
     document.addEventListener('touchmove', function(event) {
         event.preventDefault();
     }, { passive: false });
+
+    // Ensure audio can play on mobile
+    function enableAudioPlayback() {
+        radioSound.play().then(() => {
+            radioSound.pause();
+            radioSound.currentTime = 0;
+        });
+        whiteNoise.play().then(() => {
+            whiteNoise.pause();
+            whiteNoise.currentTime = 0;
+        });
+    }
+
+    // Ensure the audio can play on touch interaction
+    document.addEventListener('touchstart', enableAudioPlayback, { once: true });
 
 </script>
 
